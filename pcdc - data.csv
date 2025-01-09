@@ -1,0 +1,25 @@
+Dancers,Max Dances/Dancer,Dances,Max Dancers/Dance,CR - dance1,CR - dance2,CR - dance3,CR - dance4,CR - dance5,DR - name1,DR - name2,DR - name3,DR - name4,DR - name5,DR - name6,DR - name7,DR - name8,DR - name9,DR - name10,DR - name11,DR - name12,DR - name13,DR - name14,DR - name15,DR - name16,DR - name17,DR - name18,DR - name19,DR - name20,DR - name21,DR - name22,DR - name23,DR - name24
+name1,1,dance1,2,name22,name10,name12,name10,name6,dance1,dance3,dance3,dance5,dance5,dance2,dance2,dance3,dance5,dance2,dance4,dance3,dance3,dance1,dance2,dance4,dance2,dance1,dance3,dance1,dance4,dance5,dance1,dance5
+name2,2,dance2,4,name14,name11,name15,name4,name19,dance3,dance1,dance4,dance2,dance3,dance4,dance3,dance4,dance3,dance1,dance2,dance2,dance5,dance4,dance4,dance3,dance5,dance5,dance2,dance5,dance2,dance4,dance5,dance1
+name3,3,dance3,8,name10,name12,name6,name18,name14,dance2,dance2,dance2,dance4,dance4,dance5,dance4,dance2,dance2,dance4,dance5,dance5,dance1,dance2,dance5,dance1,dance3,dance2,dance1,dance2,dance5,dance1,dance3,dance2
+name4,4,dance4,12,name11,name5,name20,name13,name17,dance4,dance4,dance1,dance1,dance1,dance1,dance5,dance5,dance1,dance3,dance3,dance4,dance4,dance5,dance3,dance5,dance1,dance4,dance4,dance3,dance3,dance2,dance2,dance4
+name5,1,dance5,16,name19,name21,name16,name6,name9,dance5,dance5,dance5,dance3,dance2,dance3,dance1,dance1,dance4,dance5,dance1,dance1,dance2,dance3,dance1,dance2,dance4,dance3,dance5,dance4,dance1,dance3,dance4,dance3
+name6,2,,,name4,name22,name9,name21,name18,,,,,,,,,,,,,,,,,,,,,,,,
+name7,3,,,name18,name20,name8,name1,name3,,,,,,,,,,,,,,,,,,,,,,,,
+name8,4,,,name21,name16,name24,name5,name4,,,,,,,,,,,,,,,,,,,,,,,,
+name9,1,,,name12,name19,name5,name2,name13,,,,,,,,,,,,,,,,,,,,,,,,
+name10,2,,,name20,name2,name4,name9,name1,,,,,,,,,,,,,,,,,,,,,,,,
+name11,3,,,name3,name13,name19,name8,name8,,,,,,,,,,,,,,,,,,,,,,,,
+name12,4,,,name13,name7,name2,name20,name5,,,,,,,,,,,,,,,,,,,,,,,,
+name13,1,,,name17,name6,name11,name14,name11,,,,,,,,,,,,,,,,,,,,,,,,
+name14,2,,,name9,name8,name7,name19,name16,,,,,,,,,,,,,,,,,,,,,,,,
+name15,3,,,name5,name17,name18,name12,name7,,,,,,,,,,,,,,,,,,,,,,,,
+name16,4,,,name1,name4,name3,name11,name15,,,,,,,,,,,,,,,,,,,,,,,,
+name17,1,,,name6,name14,name22,name15,name21,,,,,,,,,,,,,,,,,,,,,,,,
+name18,2,,,name23,name15,name10,name16,name10,,,,,,,,,,,,,,,,,,,,,,,,
+name19,3,,,name2,name3,name14,name23,name23,,,,,,,,,,,,,,,,,,,,,,,,
+name20,4,,,name15,name18,name21,name24,name20,,,,,,,,,,,,,,,,,,,,,,,,
+name21,1,,,name16,name24,name23,name3,name24,,,,,,,,,,,,,,,,,,,,,,,,
+name22,2,,,name24,name1,name17,name22,name22,,,,,,,,,,,,,,,,,,,,,,,,
+name23,3,,,name8,name23,name13,name17,name12,,,,,,,,,,,,,,,,,,,,,,,,
+name24,4,,,name7,name9,name1,name7,name2,,,,,,,,,,,,,,,,,,,,,,,,
