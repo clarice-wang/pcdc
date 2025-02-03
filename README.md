@@ -5,7 +5,11 @@ A Python tool for optimizing dance assignments and show order for dance performa
 ## Overview
 
 This tool helps solve two key problems in dance show organization:
-1. Matching dancers to dances based on both choreographer and dancer preferences
+1. Matching dancers to dances based on:
+   - Dancer preferences (most wanted and okay with)
+   - Choreographer ratings (1-5 scale)
+   - Dancer experience levels
+   - Desired number of dances per dancer
 2. Optimizing the show order to minimize quick changes for dancers
 
 ## Prerequisites
@@ -17,6 +21,69 @@ This tool helps solve two key problems in dance show organization:
   ```
 
 ## Setup Process
+
+### 1. Prepare the Input Data
+You'll need two separate CSV files:
+
+#### Dancer Preferences CSV (`dancer_preferences.csv`)
+Contains information about each dancer's preferences:
+- Name: Dancer's full name
+- Experience: none/beginner/intermediate/advanced
+- Dances: Number of dances they want to participate in (1-2/2-3/3-4/4-5/5+)
+- Most: Comma-separated list of dances they most want to join
+- Okay: Comma-separated list of dances they're willing to join
+- No: Comma-separated list of dances they do not want to join
+
+#### Choreographer Preferences CSV (`choreographer_preferences.csv`)
+Contains information about each dance and choreographer preferences:
+- Dance: Name of the dance
+- NumDancers: Maximum number of dancers needed
+- Rating_5: Comma-separated list of most-wanted dancers
+- Rating_4: Comma-separated list of highly-wanted dancers
+- Rating_3: Comma-separated list of wanted dancers
+- Rating_2: Comma-separated list of acceptable dancers
+- Rating_1: Comma-separated list of least-preferred dancers
+
+### 2. File Placement
+Place both CSV files in the same directory as the script:
+- `dancer_preferences.csv`
+- `choreographer_preferences.csv`
+
+## Running the Tool
+
+Run the script: `python3 pcdcNEW.py`
+
+## Output
+
+The tool generates:
+
+1. Console output showing:
+   - Assignments summary for each dance
+   - Optimized show order
+
+2. Two CSV files:
+   - `dance_assignments.csv`: Complete list of assignments with ratings
+   - `show_order.csv`: Optimized performance order
+
+## How It Works
+
+1. **Data Loading**: 
+   - Reads dancer preferences and choreographer ratings from separate CSV files
+   - Parses desired dance ranges and experience levels
+
+2. **Matching Algorithm**:
+   - Respects dancers' "do not want" preferences (never assigns to these dances)
+   - First pass: Assigns dancers to their "most wanted" dances
+   - Second pass: Fills remaining spots with "okay with" preferences
+   - Optimization pass: Improves assignments based on ratings
+
+3. **Show Order Optimization**:
+   - Creates a graph where:
+     - Nodes represent dances
+     - Edges represent shared dancers between dances
+   - Uses a minimum spanning tree to minimize quick changes
+
+## Setup Process - pcdcOLD
 
 ### 1. Prepare the Input Data
 1. Use the [provided Google Sheets template](https://docs.google.com/spreadsheets/d/1ujp3BMIgsjc-Bwi_FJCohTYMzLsLyULVUY9hr0JExAk/edit?usp=sharing) to collect:
@@ -40,7 +107,7 @@ Your CSV should include the following columns:
 - `DR - {dancer_name}`: Dance preferences for each dancer
 
 
-## Running the Tool
+## Running the Tool - pcdcOLD
 
 1. Place your CSV file in the same directory as `pcdc.py`
 2. Run the script:
@@ -48,7 +115,7 @@ Your CSV should include the following columns:
    python3 pcdc.py
    ```
 
-## Output
+## Output - pcdcOLD
 
 The tool generates:
 1. Console output showing:
@@ -56,7 +123,7 @@ The tool generates:
    - Optimized show order to minimize quick changes
 2. A CSV file (`pcdc_assignments.csv`) containing all assignments
 
-## How It Works
+## How It Works - pcdcOLD
 
 1. **Data Loading**: Reads dancer and dance information from the CSV file
 2. **Matching Algorithm**: Uses a modified version of the stable marriage algorithm to assign dancers to dances based on preferences
@@ -65,7 +132,7 @@ The tool generates:
    - Edges represent shared dancers between dances
    - Uses a minimum spanning tree to minimize quick changes
 
-## Troubleshooting
+## Troubleshooting - pcdcOLD
 
 Common issues:
 1. **Column Name Errors**: Ensure your CSV column names exactly match the expected format:
@@ -76,7 +143,7 @@ Common issues:
    - Complete ranking lists
    - No duplicate entries
 
-## Limitations
+## Limitations - pcdcOLD
 
 - The tool assumes all preferences are provided
 - Rankings must be complete (no partial rankings)
