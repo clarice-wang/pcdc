@@ -11,30 +11,38 @@ def load_data():
     dancers_df = pd.read_csv(DANCER_CSV)
     choreo_df = pd.read_csv(CHOREO_CSV)
     
-    # Parse dancer information
+    # Parse dancer information first
     dancers = {}
     for _, row in dancers_df.iterrows():
-        dancers[row['Name']] = {
+        dancers[str(row['Name'])] = {
             'experience': row['Experience'],
             'dances': parse_dance_range(row['Dances']),
-            'most': str(row['Most']).split(','),
-            'okay': str(row['Okay']).split(','),
-            'no': str(row['No']).split(','),
+            'most': parse_preference_list(row['Most']),
+            'okay': parse_preference_list(row['Okay']),
+            'no': parse_preference_list(row['No']),
             'current_dances': []
         }
     
-    # Parse choreographer information
+    # Get valid dancer set
+    valid_dancers = set(dancers.keys())
+    
+    # Parse choreographer information, filtering out invalid dancers
     dances = {}
     for _, row in choreo_df.iterrows():
-        dances[row['Dance']] = {
-            'max_dancers': int(row['NumDancers']),
-            'ratings': {
-                5: str(row['Rating_5']).split(','),
-                4: str(row['Rating_4']).split(','),
-                3: str(row['Rating_3']).split(','),
-                2: str(row['Rating_2']).split(','),
-                1: str(row['Rating_1']).split(',')
-            },
+        ratings_dict = {}
+        for rating in range(1, 6):
+            # Filter out any dancers that aren't in our dancer list
+            rated_dancers = parse_preference_list(row[f'Rating_{rating}'])
+            ratings_dict[rating] = [d for d in rated_dancers if d in valid_dancers]
+            
+            # Print warning about invalid dancers
+            invalid_dancers = [d for d in rated_dancers if d not in valid_dancers]
+            if invalid_dancers:
+                print(f"Warning: Dance '{row['Dance']}' rated unknown dancer(s) {invalid_dancers} as {rating}")
+        
+        dances[str(row['Dance'])] = {
+            'max_dancers': parse_num_dancers(str(row['NumDancers'])),
+            'ratings': ratings_dict,
             'current_dancers': []
         }
     
@@ -51,6 +59,30 @@ def parse_dance_range(range_str):
     }
     return ranges.get(range_str, (1, 2))  # Default to 1-2 if invalid
 
+def parse_num_dancers(num_str):
+    """Convert number of dancers string to min-max tuple"""
+    try:
+        if '-' in num_str:
+            # Handle range format (e.g., "10-14")
+            min_val, max_val = map(int, num_str.split('-'))
+            return (min_val, max_val)
+        elif ',' in num_str:
+            # Handle options format (e.g., "3,5")
+            options = [int(x.strip()) for x in num_str.split(',')]
+            return (min(options), max(options))
+        else:
+            # Handle single number
+            val = int(num_str)
+            return (val, val)
+    except (ValueError, TypeError):
+        return (1, 1)  # Default fallback
+
+def parse_preference_list(value):
+    """Parse a preference list, handling empty/NaN values"""
+    if pd.isna(value) or value == '':
+        return []
+    return [str(x.strip()) for x in str(value).split(',') if x.strip()]
+
 def get_dancer_rating(dancer, dance, dances):
     """Get choreographer's rating for a dancer"""
     for rating in range(5, 0, -1):
@@ -65,7 +97,9 @@ def can_add_dancer(dancer, dance, dancers, dances):
         return False
         
     # Check if dance is full
-    if len(dances[dance]['current_dancers']) >= dances[dance]['max_dancers']:
+    current_dancers = len(dances[dance]['current_dancers'])
+    max_dancers_range = dances[dance]['max_dancers']
+    if current_dancers >= max_dancers_range[1]:  # Use upper bound of range
         return False
     
     # Check if dancer has reached their maximum
@@ -73,10 +107,41 @@ def can_add_dancer(dancer, dance, dancers, dances):
     max_dances = dancers[dancer]['dances'][1]
     return current_count < max_dances
 
+def identify_excluded_dancers(dances):
+    """Identify dancers that are rated 1 by more than 80% of choreographers"""
+    total_dances = len(dances)
+    threshold = 0.8 * total_dances
+    
+    # Count how many dances gave each dancer a rating of 1
+    rating_1_counts = defaultdict(int)
+    for dance in dances:
+        for dancer in dances[dance]['ratings'][1]:
+            rating_1_counts[dancer] += 1
+    
+    # Find dancers above threshold
+    excluded_dancers = [
+        dancer for dancer, count in rating_1_counts.items() 
+        if count >= threshold
+    ]
+    
+    if excluded_dancers:
+        print("\nWARNING: The following dancers were rated poorly by >80% of choreographers")
+        print("and will be excluded from assignments:")
+        for dancer in excluded_dancers:
+            print(f"- {dancer} (rated 1 by {rating_1_counts[dancer]} choreographers)")
+        print()
+    
+    return set(excluded_dancers)
+
 def assign_dancers(dancers, dances):
     """Main matching algorithm"""
+    # First identify dancers to exclude
+    excluded_dancers = identify_excluded_dancers(dances)
+    
     # First pass: Assign dancers to their most wanted dances
     for dancer in dancers:
+        if dancer in excluded_dancers:
+            continue
         for dance in dancers[dancer]['most']:
             if dance in dances and can_add_dancer(dancer, dance, dancers, dances):
                 if get_dancer_rating(dancer, dance, dances) > 0:  # Only assign if rated
@@ -85,27 +150,29 @@ def assign_dancers(dancers, dances):
 
     # Second pass: Fill remaining spots with "okay with" preferences
     for dancer in dancers:
+        if dancer in excluded_dancers:
+            continue
         if len(dancers[dancer]['current_dances']) < dancers[dancer]['dances'][0]:
             for dance in dancers[dancer]['okay']:
                 if dance in dances and can_add_dancer(dancer, dance, dancers, dances):
-                    if get_dancer_rating(dancer, dance, dances) > 0:
+                    if get_dancer_rating(dancer, dance, dances) > 0:  # Only assign if rated
                         dances[dance]['current_dancers'].append(dancer)
                         dancers[dancer]['current_dances'].append(dance)
 
     # Optional: Optimization pass to improve assignments
-    optimize_assignments(dancers, dances)
+    optimize_assignments(dancers, dances, excluded_dancers)
 
-def optimize_assignments(dancers, dances):
+def optimize_assignments(dancers, dances, excluded_dancers):
     """Attempt to improve assignments by swapping dancers"""
     improvements_made = True
     while improvements_made:
         improvements_made = False
         for dance in dances:
-            if len(dances[dance]['current_dancers']) < dances[dance]['max_dancers']:
+            if len(dances[dance]['current_dancers']) < dances[dance]['max_dancers'][1]:
                 # Look for highly rated dancers not in the dance
                 for rating in range(5, 2, -1):  # Only consider ratings 5-3
                     for dancer in dances[dance]['ratings'][rating]:
-                        if dancer not in dances[dance]['current_dancers']:
+                        if dancer not in excluded_dancers and dancer not in dances[dance]['current_dancers']:
                             if can_add_dancer(dancer, dance, dancers, dances):
                                 dances[dance]['current_dancers'].append(dancer)
                                 dancers[dancer]['current_dances'].append(dance)
@@ -167,7 +234,7 @@ def main():
     for dance in dances:
         print(f"\n{dance}:")
         print(f"Dancers: {', '.join(dances[dance]['current_dancers'])}")
-        print(f"Total: {len(dances[dance]['current_dancers'])}/{dances[dance]['max_dancers']}")
+        print(f"Total: {len(dances[dance]['current_dancers'])}/{dances[dance]['max_dancers'][1]}")
     
     print("\nShow Order:")
     print(" -> ".join(show_order))

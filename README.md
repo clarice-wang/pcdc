@@ -37,12 +37,18 @@ Contains information about each dancer's preferences:
 #### Choreographer Preferences CSV (`choreographer_preferences.csv`)
 Contains information about each dance and choreographer preferences:
 - Dance: Name of the dance
-- NumDancers: Maximum number of dancers needed
+- NumDancers: Maximum number of dancers needed (can be a range like "10-14" or options like "3,5")
 - Rating_5: Comma-separated list of most-wanted dancers
 - Rating_4: Comma-separated list of highly-wanted dancers
 - Rating_3: Comma-separated list of wanted dancers
 - Rating_2: Comma-separated list of acceptable dancers
 - Rating_1: Comma-separated list of least-preferred dancers
+
+Note: For ratings:
+- It's okay to leave some rating categories empty
+- Spaces around commas in the lists are optional
+- Dancers who are rated 1 by more than 80% of choreographers will be excluded from assignments
+- All dancers in rating lists must exist in the dancer preferences CSV
 
 ### 2. File Placement
 Place both CSV files in the same directory as the script:
@@ -70,8 +76,11 @@ The tool generates:
 1. **Data Loading**: 
    - Reads dancer preferences and choreographer ratings from separate CSV files
    - Parses desired dance ranges and experience levels
+   - Validates that all rated dancers exist in the dancer list
+   - Handles flexible dancer count requirements (ranges and options)
 
 2. **Matching Algorithm**:
+   - Identifies and excludes dancers rated poorly by >80% of choreographers
    - Respects dancers' "do not want" preferences (never assigns to these dances)
    - First pass: Assigns dancers to their "most wanted" dances
    - Second pass: Fills remaining spots with "okay with" preferences
