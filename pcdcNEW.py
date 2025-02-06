@@ -92,6 +92,10 @@ def get_dancer_rating(dancer, dance, dances):
 
 def can_add_dancer(dancer, dance, dancers, dances):
     """Check if a dancer can be added to a dance"""
+    # Check if dancer is already in the dance
+    if dancer in dances[dance]['current_dancers']:
+        return False
+        
     # Check if dance is in do-not-want list
     if dance in dancers[dancer]['no']:
         return False
