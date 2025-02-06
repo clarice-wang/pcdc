@@ -47,7 +47,7 @@ Contains information about each dance and choreographer preferences:
 Note: For ratings:
 - It's okay to leave some rating categories empty
 - Spaces around commas in the lists are optional
-- Dancers who are rated 1 by more than 80% of choreographers will be excluded from assignments
+- Dancers who are rated 1 by more than 70% of choreographers will be excluded from assignments
 - All dancers in rating lists must exist in the dancer preferences CSV
 
 ### 2. File Placement
@@ -80,10 +80,12 @@ The tool generates:
    - Handles flexible dancer count requirements (ranges and options)
 
 2. **Matching Algorithm**:
-   - Identifies and excludes dancers rated poorly by >80% of choreographers
+   - Identifies and excludes dancers rated poorly by >60% of choreographers
    - Respects dancers' "do not want" preferences (never assigns to these dances)
-   - First pass: Assigns dancers to their "most wanted" dances
-   - Second pass: Fills remaining spots with "okay with" preferences
+   - Three-pass assignment process:
+     1. First pass: Assigns each dancer to ONE of their "most wanted" dances
+     2. Second pass: Ensures everyone has at least one dance (using "okay" preferences if needed)
+     3. Third pass: Fills remaining spots up to dancer maximums
    - Optimization pass: Improves assignments based on ratings
 
 3. **Show Order Optimization**:

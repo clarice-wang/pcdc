@@ -105,12 +105,21 @@ def can_add_dancer(dancer, dance, dancers, dances):
     # Check if dancer has reached their maximum
     current_count = len(dancers[dancer]['current_dances'])
     max_dances = dancers[dancer]['dances'][1]
-    return current_count < max_dances
+    if current_count >= max_dances:
+        return False
+
+    # Prevent dancers from being in both '只此青绿' and '玉鸟'
+    if dance in ['只此青绿', '玉鸟']:
+        other_dance = '玉鸟' if dance == '只此青绿' else '只此青绿'
+        if other_dance in dancers[dancer]['current_dances']:
+            return False
+
+    return True
 
 def identify_excluded_dancers(dances):
-    """Identify dancers that are rated 1 by more than 80% of choreographers"""
+    """Identify dancers that are rated 1 by more than 60% of choreographers"""
     total_dances = len(dances)
-    threshold = 0.8 * total_dances
+    threshold = 0.6 * total_dances
     
     # Count how many dances gave each dancer a rating of 1
     rating_1_counts = defaultdict(int)
@@ -125,7 +134,7 @@ def identify_excluded_dancers(dances):
     ]
     
     if excluded_dancers:
-        print("\nWARNING: The following dancers were rated poorly by >80% of choreographers")
+        print("\nWARNING: The following dancers were rated poorly by >60% of choreographers")
         print("and will be excluded from assignments:")
         for dancer in excluded_dancers:
             print(f"- {dancer} (rated 1 by {rating_1_counts[dancer]} choreographers)")
@@ -138,7 +147,7 @@ def assign_dancers(dancers, dances):
     # First identify dancers to exclude
     excluded_dancers = identify_excluded_dancers(dances)
     
-    # First pass: Assign dancers to their most wanted dances
+    # First pass: Assign dancers to ONE of their most wanted dances
     for dancer in dancers:
         if dancer in excluded_dancers:
             continue
@@ -147,17 +156,56 @@ def assign_dancers(dancers, dances):
                 if get_dancer_rating(dancer, dance, dances) > 0:  # Only assign if rated
                     dances[dance]['current_dancers'].append(dancer)
                     dancers[dancer]['current_dances'].append(dance)
-
-    # Second pass: Fill remaining spots with "okay with" preferences
+                    break  # Only assign ONE dance initially
+    
+    # Second pass: Ensure everyone has at least one dance (using "okay" preferences)
     for dancer in dancers:
         if dancer in excluded_dancers:
             continue
-        if len(dancers[dancer]['current_dances']) < dancers[dancer]['dances'][0]:
+        if len(dancers[dancer]['current_dances']) == 0:
+            # Try their "okay" dances first
             for dance in dancers[dancer]['okay']:
                 if dance in dances and can_add_dancer(dancer, dance, dancers, dances):
-                    if get_dancer_rating(dancer, dance, dances) > 0:  # Only assign if rated
+                    if get_dancer_rating(dancer, dance, dances) > 0:
                         dances[dance]['current_dancers'].append(dancer)
                         dancers[dancer]['current_dances'].append(dance)
+                        break
+            
+            # If still not assigned, try any available dance
+            if len(dancers[dancer]['current_dances']) == 0:
+                for dance in dances:
+                    if (dance not in dancers[dancer]['no'] and 
+                        can_add_dancer(dancer, dance, dancers, dances) and 
+                        get_dancer_rating(dancer, dance, dances) > 0):
+                        dances[dance]['current_dancers'].append(dancer)
+                        dancers[dancer]['current_dances'].append(dance)
+                        break
+
+    # Third pass: Now assign additional dances up to limits
+    for dancer in dancers:
+        if dancer in excluded_dancers:
+            continue
+        # First try their "most" preferences
+        for dance in dancers[dancer]['most']:
+            if dance in dances and can_add_dancer(dancer, dance, dancers, dances):
+                if get_dancer_rating(dancer, dance, dances) > 0:
+                    dances[dance]['current_dancers'].append(dancer)
+                    dancers[dancer]['current_dances'].append(dance)
+
+        # Then try their "okay" preferences
+        for dance in dancers[dancer]['okay']:
+            if dance in dances and can_add_dancer(dancer, dance, dancers, dances):
+                if get_dancer_rating(dancer, dance, dances) > 0:
+                    dances[dance]['current_dancers'].append(dancer)
+                    dancers[dancer]['current_dances'].append(dance)
+
+    # Print warning for any still-unassigned dancers
+    unassigned = [d for d in dancers if d not in excluded_dancers and len(dancers[d]['current_dances']) == 0]
+    if unassigned:
+        print("\nWARNING: Could not assign the following dancers to any dances:")
+        for dancer in unassigned:
+            print(f"- {dancer}")
+        print()
 
     # Optional: Optimization pass to improve assignments
     optimize_assignments(dancers, dances, excluded_dancers)
@@ -198,7 +246,7 @@ def create_show_order(dances):
 
 def save_results(dancers, dances, show_order):
     """Save results to CSV files"""
-    # Save assignments
+    # Save dance assignments
     assignments = []
     for dance in dances:
         for dancer in dances[dance]['current_dancers']:
@@ -210,6 +258,18 @@ def save_results(dancers, dances, show_order):
     
     assignments_df = pd.DataFrame(assignments)
     assignments_df.to_csv('dance_assignments.csv', index=False)
+    
+    # Save dancer assignments
+    dancer_assignments = []
+    for dancer in dancers:
+        dancer_assignments.append({
+            'Dancer': dancer,
+            'Assigned_Dances': ','.join(dancers[dancer]['current_dances']),
+            'Number_of_Dances': len(dancers[dancer]['current_dances'])
+        })
+    
+    dancer_df = pd.DataFrame(dancer_assignments)
+    dancer_df.to_csv('dancer_assignments.csv', index=False)
     
     # Save show order
     show_order_df = pd.DataFrame({'Order': range(1, len(show_order) + 1),
@@ -236,10 +296,18 @@ def main():
         print(f"Dancers: {', '.join(dances[dance]['current_dancers'])}")
         print(f"Total: {len(dances[dance]['current_dancers'])}/{dances[dance]['max_dancers'][1]}")
     
+    print("\nDancer Assignments:")
+    for dancer in sorted(dancers.keys()):
+        if dancers[dancer]['current_dances']:
+            print(f"{dancer}: {', '.join(dancers[dancer]['current_dances'])} ({len(dancers[dancer]['current_dances'])} dances)")
+    
     print("\nShow Order:")
     print(" -> ".join(show_order))
     
-    print("\nResults saved to 'dance_assignments.csv' and 'show_order.csv'")
+    print("\nResults saved to:")
+    print("- 'dance_assignments.csv' (dance-centric view)")
+    print("- 'dancer_assignments.csv' (dancer-centric view)")
+    print("- 'show_order.csv'")
 
 if __name__ == "__main__":
     main()
